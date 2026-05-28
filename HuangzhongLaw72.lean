@@ -11,22 +11,7 @@
     5. 定理4.5: {2,3}-算术同构 (范畴论)
 -/
 
-import Mathlib.Data.Nat.Factorial.DoubleFactorial
-import Mathlib.Data.Nat.Prime.Basic
-import Mathlib.Data.ZMod.Basic
-import Mathlib.Data.Rat.Defs
-import Mathlib.Data.Rat.Order
-import Mathlib.Data.Rat.Lemmas
-import Mathlib.GroupTheory.OrderOfElement
-import Mathlib.Algebra.Group.Subgroup.Basic
-import Mathlib.CategoryTheory.Category.Basic
-import Mathlib.CategoryTheory.Functor.Basic
-import Mathlib.CategoryTheory.Adjunction.Basic
-import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Topology.Algebra.InfiniteSum.Basic
-import Mathlib.Topology.Algebra.InfiniteSum.Order
-import Mathlib.Topology.Algebra.InfiniteSum.NatInt
-import Mathlib.Analysis.Normed.Group.InfiniteSum
+import Mathlib
 
 open Nat CategoryTheory
 
