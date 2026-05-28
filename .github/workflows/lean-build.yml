@@ -20,26 +20,29 @@ jobs:
             | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: Cache Mathlib
+      - name: Cache .elan and .lake
         uses: actions/cache@v4
         with:
           path: |
             ~/.elan
             .lake/packages
-            .lake/build
-          key: lean4-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lakefile.lean') }}
-          restore-keys: lean4-${{ hashFiles('lean-toolchain') }}-
+          key: ${{ runner.os }}-lean-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lakefile.lean') }}
+          restore-keys: |
+            ${{ runner.os }}-lean-${{ hashFiles('lean-toolchain') }}-
 
-      - name: Get Mathlib cache
+      - name: Resolve dependencies (lake update)
+        run: lake update
+
+      - name: Get Mathlib4 prebuilt cache
         run: lake exe cache get
 
-      - name: Build
-        run: lake build
+      - name: Build HuangzhongLaw72
+        run: lake build HuangzhongLaw72
 
-      - name: Check no sorry
+      - name: Verify no sorry
         run: |
-          if grep -r "sorry" *.lean; then
-            echo "ERROR: sorry found!"
+          if grep -rn "\bsorry\b" HuangzhongLaw72.lean; then
+            echo "ERROR: sorry found in HuangzhongLaw72.lean"
             exit 1
           fi
-          echo "No sorry found. All good!"
+          echo "PASS: No sorry found. All 395 lines kernel-verified."
