@@ -108,13 +108,14 @@ def sunYiGroup : Subgroup ℚˣ where
         = ↑x * ↑y := Units.val_mul x y
       _ = (2 : ℚ) ^ a₁ * (3 : ℚ) ^ b₁ * ((2 : ℚ) ^ a₂ * (3 : ℚ) ^ b₂) := by rw [h₁, h₂]
       _ = (2 : ℚ) ^ (a₁ + a₂) * (3 : ℚ) ^ (b₁ + b₂) := by
-        simp [zpow_add, mul_assoc, mul_left_comm]⟩
+        simp [mul_assoc, mul_left_comm]
+        rw [zpow_add, zpow_add]⟩
   one_mem' := ⟨0, 0, by simp⟩
   inv_mem' := by
     intro x ⟨a, b, h⟩
     exact ⟨-a, -b, by
     calc ↑x⁻¹
-        = (↑x)⁻¹ := Units.val_inv x
+        = (↑x)⁻¹ := Units.val_inv_eq_inv x
       _ = ((2 : ℚ) ^ a * (3 : ℚ) ^ b)⁻¹ := by rw [h]
       _ = ((2 : ℚ) ^ a)⁻¹ * ((3 : ℚ) ^ b)⁻¹ := inv_mul' ((2 : ℚ) ^ a) ((3 : ℚ) ^ b)
       _ = (2 : ℚ) ^ (-a) * (3 : ℚ) ^ (-b) := by
@@ -131,7 +132,7 @@ theorem partialSum_5_exact :
     partialSum_piE 5 = 1 - 1/3 + 1/15 - 1/105 + 1/945 - 1/10395 := by
   unfold partialSum_piE doubleFactOdd
   simp [Finset.sum_range_succ]
-  norm_num
+  norm_num [Finset.sum_range_succ]
 
 /-- 72律需要6个八度层级 (k=0到5) -/
 theorem octave_layers : 72 / 12 = 6 := by native_decide
@@ -265,7 +266,7 @@ private theorem doubleFactOdd_lt_succ (n : ℕ) : doubleFactOdd n < doubleFactOd
   have h_pos := doubleFactOdd_pos n
   have h_lt : 1 < 2 * (n + 1) + 1 := by omega
   -- 直接证明: df(n) < (2n+3) * df(n)
-  apply Nat.mul_lt_mul_of_pos_right h_lt h_pos
+  exact Nat.mul_lt_mul_of_pos_right h_lt h_pos
 
 /-- 双阶乘严格递增 (归纳步骤透明化)
     对 m < n 归纳: 基情形 m = n-1 直接用 lt_succ; 否则由传递性组合 -/
@@ -306,12 +307,10 @@ theorem piE_term_norm_le (n : ℕ) : ‖piE_term n‖ ≤ (1 / 3 : ℝ) ^ n := b
   have h_le : 3 ^ n ≤ (doubleFactOdd n : ℝ) := mod_cast doubleFactOdd_ge_pow3 n
   -- 手动证明: 0 < a ≤ b ⇒ b⁻¹ ≤ a⁻¹
   have h_inv : (doubleFactOdd n : ℝ)⁻¹ ≤ (3 ^ n : ℝ)⁻¹ := by
-    -- 使用 Real.inv_le_inv 的等价形式
-    have h_inv_le : (3 ^ n : ℝ)⁻¹ ≤ (doubleFactOdd n : ℝ)⁻¹ ↔ (doubleFactOdd n : ℝ) ≤ (3 ^ n : ℝ) := by
-      apply Real.inv_le_inv h_pos
-    rw [h_inv_le]
-    exact h_le
-  exact h_inv
+    -- 使用 inv_le_inv_of_le 的等价形式
+    apply inv_le_inv_of_le
+    · exact h_pos
+    · exact h_le
 
 /-- π-e交替级数绝对收敛 (核心定理) -/
 theorem piE_series_summable : Summable piE_term :=
@@ -324,7 +323,7 @@ theorem piE_norm_summable : Summable (fun n => ‖piE_term n‖) :=
   (summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1 / 3) (by norm_num : (1 : ℝ) / 3 < 1)).of_norm_bounded
     (fun n => by 
     have h_norm : ‖piE_term n‖ = |piE_term n| := Real.norm_eq_abs (piE_term n)
-    rw [h_norm]
+    rw [← h_norm]
     exact piE_term_norm_le n)
 
 /-- 部分和的实数版本 -/
@@ -340,7 +339,7 @@ theorem partialSum_bounded (N : ℕ) : |partialSum_piE_real N| ≤ 2 := by
         Finset.sum_le_sum (fun n _ => piE_term_norm_le n)
     _ ≤ ∑' n, (1 / 3 : ℝ) ^ n := by
         have h_nonneg : ∀ n, 0 ≤ (1 / 3 : ℝ) ^ n := fun n => pow_nonneg (by norm_num : (0 : ℝ) ≤ 1/3) n
-        have h_summable := summable_geometric_of_lt_one (by norm_num : (by norm_num : (1 : ℝ) < 3))
+        have h_summable := summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/3) (by norm_num : (1 : ℝ) / 3 < 1)
         -- 使用基本不等式: 有限和 ≤ 无限和
         apply sum_le_tsum_of_nonneg' (Finset.range (N + 1)) h_summable h_nonneg
         intro n _
@@ -365,11 +364,13 @@ theorem piE_limit_bounded : |piE_limit| ≤ 3 / 2 := by
         have h_le : ∀ n, ‖piE_term n‖ ≤ (1 / 3 : ℝ) ^ n := fun n => by
           simp only [Real.norm_eq_abs]; exact piE_term_norm_le n
         -- 直接比较两个级数
-        apply tsum_le_tsum_of_nonneg
-        · exact piE_norm_summable
-        · exact summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/3) (by norm_num : (1 : ℝ) / 3 < 1)
-        · exact h_nonneg
-        · exact h_le
+        have h_tsum_le : ∑' n, ‖piE_term n‖ ≤ ∑' n, (1 / 3 : ℝ) ^ n := by
+          apply tsum_le_tsum_of_nonneg
+          · exact piE_norm_summable
+          · exact summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/3) (by norm_num : (1 : ℝ) / 3 < 1)
+          · exact h_nonneg
+          · exact h_le
+        exact h_tsum_le
     _ = 3 / 2 := by
         rw [tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/3) (by norm_num : (1:ℝ)/3 < 1)]
         ring
@@ -387,7 +388,7 @@ theorem geom_tail_summable (k : ℕ) : Summable (fun n => (1 / 3 : ℝ) ^ (n + k
 theorem piE_tail_norm_summable (k : ℕ) : Summable (fun n => ‖piE_term (n + k)‖) :=
   (geom_tail_summable k).of_norm_bounded (fun n => by
     have h_norm : ‖piE_term (n + k)‖ = |piE_term (n + k)| := Real.norm_eq_abs (piE_term (n + k))
-    rw [h_norm]
+    rw [← h_norm]
     exact piE_term_norm_le (n + k))
 
 /-- 6项截断逼近定理: ‖S_5 - L‖ ≤ (1/3)^5 / 2
@@ -400,7 +401,8 @@ theorem truncation_6_approx :
   have hdecomp : ∑ n ∈ Finset.range 6, piE_term n + ∑' n, piE_term (n + 6) =
       ∑' n, piE_term n := by
     -- 使用级数分解的基本性质
-    rw [← sum_add_tsum_nat_add 6 piE_series_summable]
+    have h := sum_add_tsum_nat_add 6 piE_series_summable
+    exact h.symm
   -- 因此 S_5 - L = -(∑' n, piE_term (n + 6))
   -- 代数变换: hdecomp 给出 A + B = C, 故 A - C = -(C - A) = -B
   have hdiff : ∑ n ∈ Finset.range 6, piE_term n - ∑' n, piE_term n =
@@ -416,15 +418,17 @@ theorem truncation_6_approx :
         have h_le : ∀ n, ‖piE_term (n + 6)‖ ≤ (1 / 3 : ℝ) ^ (n + 6) := fun n => by
           simp only [Real.norm_eq_abs]; exact piE_term_norm_le (n + 6)
         -- 直接比较两个级数
-        apply tsum_le_tsum_of_nonneg
-        · exact piE_tail_norm_summable 6
-        · exact geom_tail_summable 6
-        · exact h_nonneg
-        · exact h_le
+        have h_tsum_le : ∑' n, ‖piE_term (n + 6)‖ ≤ ∑' n, (1 / 3 : ℝ) ^ (n + 6) := by
+          apply tsum_le_tsum_of_nonneg
+          · exact piE_tail_norm_summable 6
+          · exact geom_tail_summable 6
+          · exact h_nonneg
+          · exact h_le
+        exact h_tsum_le
     _ = (1 / 3) ^ 6 * ∑' n, (1 / 3 : ℝ) ^ n := by
         simp_rw [pow_add]
         have h_summable := summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/3) (by norm_num : (1 : ℝ) / 3 < 1)
-        rw [tsum_mul_left h_summable]
+        exact tsum_mul_left h_summable
     _ = (1 / 3) ^ 6 * (3 / 2) := by
         rw [tsum_geometric_of_lt_one (by norm_num) (by norm_num)]; ring
     _ = (1 / 3) ^ 5 / 2 := by ring
