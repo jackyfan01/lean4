@@ -44,7 +44,7 @@ def doubleFactOdd : ℕ → ℕ
 theorem doubleFactOdd_succ (n : ℕ) :
     doubleFactOdd (n + 1) = (2 * n + 3) * doubleFactOdd n := by
   unfold doubleFactOdd
-  ring_nf
+  ring
 
 /-- 三分损益递推: L_{n+1} = L_n × r, r ∈ {2/3, 4/3} -/
 def applyStep (L : ℚ) (step : SunYi) : ℚ :=
@@ -104,11 +104,15 @@ def sunYiGroup : Subgroup ℚˣ where
   carrier := {q | ∃ a b : ℤ, (q : ℚ) = (2 : ℚ)^a * (3 : ℚ)^b}
   mul_mem' := by
     intro x y ⟨a₁, b₁, h₁⟩ ⟨a₂, b₂, h₂⟩
-    exact ⟨a₁ + a₂, b₁ + b₂, by simp [h₁, h₂, mul_assoc, mul_left_comm]⟩
+    exact ⟨a₁ + a₂, b₁ + b₂, by
+    rw [h₁, h₂]
+    simp [zpow_add, mul_assoc, mul_left_comm]⟩
   one_mem' := ⟨0, 0, by simp⟩
   inv_mem' := by
     intro x ⟨a, b, h⟩
-    exact ⟨-a, -b, by simp [h, zpow_neg]⟩
+    exact ⟨-a, -b, by
+    rw [h, zpow_neg, zpow_neg]
+    simp [mul_comm]⟩
 
 /-! ## 定理4.3: 维度截断对应 -/
 
@@ -121,7 +125,7 @@ theorem partialSum_5_exact :
     partialSum_piE 5 = 1 - 1/3 + 1/15 - 1/105 + 1/945 - 1/10395 := by
   unfold partialSum_piE doubleFactOdd
   simp [Finset.sum_range_succ]
-  ring
+  norm_num
 
 /-- 72律需要6个八度层级 (k=0到5) -/
 theorem octave_layers : 72 / 12 = 6 := by native_decide
@@ -252,8 +256,6 @@ theorem doubleFactOdd_ge_pow3 (n : ℕ) : 3 ^ n ≤ doubleFactOdd n := by
     证明逻辑: df(n+1) = (2n+3) * df(n), 而 2n+3 ≥ 3 > 1, 且 df(n) > 0
     因此 df(n) = 1 * df(n) < (2n+3) * df(n) = df(n+1) -/
 private theorem doubleFactOdd_lt_succ (n : ℕ) : doubleFactOdd n < doubleFactOdd (n + 1) := by
-  unfold doubleFactOdd
-  -- 目标: doubleFactOdd n < (2 * (n + 1) + 1) * doubleFactOdd n
   have h := doubleFactOdd_pos n
   have h2 : 1 < 2 * (n + 1) + 1 := by omega
   exact Nat.mul_lt_mul_of_pos_right h2 h
@@ -268,7 +270,7 @@ theorem doubleFactOdd_strictMono : StrictMono doubleFactOdd := by
     rcases Nat.eq_or_lt_of_le (Nat.lt_succ_iff.mp hmn) with heq | hlt
     · -- m = n 情形: 直接用单步递增
       rw [heq]
-      exact doubleFactOdd_lt_succ m
+      exact doubleFactOdd_lt_succ n
     · -- m < n 情形: 由归纳假设 df(m) < df(n), 再由单步递增 df(n) < df(n+1)
       exact lt_trans (ih hlt) (doubleFactOdd_lt_succ n)
 
@@ -293,8 +295,9 @@ theorem piE_term_norm_le (n : ℕ) : ‖piE_term n‖ ≤ (1 / 3 : ℝ) ^ n := b
   -- 需证 ((doubleFactOdd n : ℝ))⁻¹ ≤ (1/3)^n
   rw [one_div, inv_pow]
   -- 目标: (↑df)⁻¹ ≤ (3^n)⁻¹, 由 3^n ≤ df(n) 和 0 < 3^n 得
-  apply inv_le_inv (pow3_cast_pos n)
-  exact_mod_cast doubleFactOdd_ge_pow3 n
+  have h_pos : 0 < (3 ^ n : ℝ) := pow_pos (by norm_num : 0 < (3 : ℝ)) n
+  have h_le : 3 ^ n ≤ (doubleFactOdd n : ℝ) := exact_mod_cast doubleFactOdd_ge_pow3 n
+  apply inv_le_inv h_pos h_le
 
 /-- π-e交替级数绝对收敛 (核心定理) -/
 theorem piE_series_summable : Summable piE_term :=
@@ -318,9 +321,10 @@ theorem partialSum_bounded (N : ℕ) : |partialSum_piE_real N| ≤ 2 := by
       ≤ ∑ n ∈ Finset.range (N + 1), ‖piE_term n‖ := norm_sum_le_of_le _ (fun n _ => le_refl _)
     _ ≤ ∑ n ∈ Finset.range (N + 1), (1 / 3 : ℝ) ^ n :=
         Finset.sum_le_sum (fun n _ => piE_term_norm_le n)
-    _ ≤ ∑' n, (1 / 3 : ℝ) ^ n :=
-        sum_le_tsum (Finset.range (N + 1)) (fun n _ => pow_nonneg (by norm_num : (0:ℝ) ≤ 1/3) n)
-          (summable_geometric_of_lt_one (by norm_num) (by norm_num))
+    _ ≤ ∑' n, (1 / 3 : ℝ) ^ n := by
+        have h_nonneg : ∀ n, 0 ≤ (1 / 3 : ℝ) ^ n := fun n => pow_nonneg (by norm_num : 0 ≤ 1/3) n
+        have h_summable := summable_geometric_of_lt_one (by norm_num) (by norm_num)
+        exact sum_le_tsum_of_nonneg (Finset.range (N + 1)) h_nonneg h_summable
     _ = 1 / (1 - 1 / 3) := tsum_geometric_of_lt_one (by norm_num) (by norm_num)
     _ = 3 / 2 := by ring
     _ ≤ 2 := by norm_num
@@ -337,8 +341,8 @@ theorem piE_limit_bounded : |piE_limit| ≤ 3 / 2 := by
   calc |∑' n, piE_term n|
       ≤ ∑' n, ‖piE_term n‖ := norm_tsum_le_tsum_norm piE_norm_summable
     _ ≤ ∑' n, (1 / 3 : ℝ) ^ n :=
-        tsum_le_tsum piE_norm_summable (summable_geometric_of_lt_one (by norm_num) (by norm_num))
-          (fun n => piE_term_norm_le n)
+        tsum_le_tsum_of_nonneg piE_norm_summable (summable_geometric_of_lt_one (by norm_num) (by norm_num))
+          (fun n => by simp only [Real.norm_eq_abs]; exact piE_term_norm_le n)
     _ = 3 / 2 := by
         rw [tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/3) (by norm_num : (1:ℝ)/3 < 1)]
         ring
@@ -366,8 +370,8 @@ theorem truncation_6_approx :
   unfold partialSum_piE_real piE_limit
   -- 关键分解: ∑' n, f n = ∑ n in range 6, f n + ∑' n, f (n + 6)
   have hdecomp : ∑ n ∈ Finset.range 6, piE_term n + ∑' n, piE_term (n + 6) =
-      ∑' n, piE_term n :=
-    (sum_add_tsum_nat_add 6 piE_series_summable).symm
+      ∑' n, piE_term n := by
+    rw [← sum_add_tsum_nat_add 6 piE_series_summable]
   -- 因此 S_5 - L = -(∑' n, piE_term (n + 6))
   -- 代数变换: hdecomp 给出 A + B = C, 故 A - C = -(C - A) = -B
   have hdiff : ∑ n ∈ Finset.range 6, piE_term n - ∑' n, piE_term n =
@@ -379,10 +383,10 @@ theorem truncation_6_approx :
   calc ‖∑' n, piE_term (n + 6)‖
       ≤ ∑' n, ‖piE_term (n + 6)‖ := norm_tsum_le_tsum_norm (piE_tail_norm_summable 6)
     _ ≤ ∑' n, (1 / 3 : ℝ) ^ (n + 6) :=
-        tsum_le_tsum (piE_tail_norm_summable 6) (geom_tail_summable 6)
-          (fun n => piE_term_norm_le (n + 6))
+        tsum_le_tsum_of_nonneg (piE_tail_norm_summable 6) (geom_tail_summable 6)
+          (fun n => by simp only [Real.norm_eq_abs]; exact piE_term_norm_le (n + 6))
     _ = (1 / 3) ^ 6 * ∑' n, (1 / 3 : ℝ) ^ n := by
-        simp_rw [pow_add]; rw [tsum_mul_left]
+        simp_rw [pow_add]; exact tsum_mul_left (summable_geometric_of_lt_one (by norm_num) (by norm_num))
     _ = (1 / 3) ^ 6 * (3 / 2) := by
         rw [tsum_geometric_of_lt_one (by norm_num) (by norm_num)]; ring
     _ = (1 / 3) ^ 5 / 2 := by ring
