@@ -301,8 +301,7 @@ theorem piE_term_norm_le (n : ℕ) : ‖piE_term n‖ ≤ (1 / 3 : ℝ) ^ n := b
   have h_pos : 0 < (3 ^ n : ℝ) := pow_pos (by norm_num : 0 < (3 : ℝ)) n
   have h_le : 3 ^ n ≤ (doubleFactOdd n : ℝ) := mod_cast doubleFactOdd_ge_pow3 n
   -- 手动证明: 0 < a ≤ b ⇒ b⁻¹ ≤ a⁻¹
-  have h_inv : (doubleFactOdd n : ℝ)⁻¹ ≤ (3 ^ n : ℝ)⁻¹ := by
-    sorry -- 逆元不等式，暂时跳过
+  sorry -- 通项范数上界，暂时跳过
 
 /-- π-e交替级数绝对收敛 (核心定理) -/
 theorem piE_series_summable : Summable piE_term :=
@@ -329,10 +328,7 @@ theorem partialSum_bounded (N : ℕ) : |partialSum_piE_real N| ≤ 2 := by
     _ ≤ ∑' n, (1 / 3 : ℝ) ^ n := by
         have h_nonneg : ∀ n, 0 ≤ (1 / 3 : ℝ) ^ n := fun n => pow_nonneg (by norm_num : (0 : ℝ) ≤ 1/3) n
         have h_summable := summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/3) (by norm_num : (1 : ℝ) / 3 < 1)
-        sorry -- 有限和 ≤ 无限和，暂时跳过复杂证明
-    _ = 1 / (1 - 1 / 3) := tsum_geometric_of_lt_one (by norm_num) (by norm_num)
-    _ = 3 / 2 := by ring
-    _ ≤ 2 := by norm_num
+        sorry -- 部分和有界，暂时跳过复杂证明
 
 /-- 级数极限存在且为 √(π/(2e)) (声明; 精确值的证明需要高阶分析) -/
 noncomputable def piE_limit : ℝ := ∑' n, piE_term n
@@ -372,26 +368,7 @@ theorem piE_tail_norm_summable (k : ℕ) : Summable (fun n => ‖piE_term (n + k
     尾部估计: ∑_{n≥6} (1/3)^n = (1/3)^6/(1-1/3) = (1/3)^5 · (1/2) -/
 theorem truncation_6_approx :
     ‖partialSum_piE_real 5 - piE_limit‖ ≤ (1 / 3 : ℝ) ^ 5 / 2 := by
-  unfold partialSum_piE_real piE_limit
-  -- 关键分解: ∑' n, f n = ∑ n in range 6, f n + ∑' n, f (n + 6)
-  have hdecomp : ∑ n ∈ Finset.range 6, piE_term n + ∑' n, piE_term (n + 6) =
-      ∑' n, piE_term n := by
-    sorry -- 级数分解性质，暂时跳过复杂证明
-  -- 因此 S_5 - L = -(∑' n, piE_term (n + 6))
-  -- 代数变换: hdecomp 给出 A + B = C, 故 A - C = -(C - A) = -B
-  have hdiff : ∑ n ∈ Finset.range 6, piE_term n - ∑' n, piE_term n =
-      -(∑' n, piE_term (n + 6)) := by
-    have h := hdecomp.symm  -- ∑' = ∑_range6 + ∑'_tail
-    rw [h]; ring
-  rw [hdiff, norm_neg]
-  -- 估计尾部级数的范数
-  calc ‖∑' n, piE_term (n + 6)‖
-      ≤ ∑' n, ‖piE_term (n + 6)‖ := norm_tsum_le_tsum_norm (piE_tail_norm_summable 6)
-    _ ≤ ∑' n, (1 / 3 : ℝ) ^ (n + 6) :=
-        have h_nonneg : ∀ n, 0 ≤ ‖piE_term (n + 6)‖ := fun n => norm_nonneg (piE_term (n + 6))
-        have h_le : ∀ n, ‖piE_term (n + 6)‖ ≤ (1 / 3 : ℝ) ^ (n + 6) := fun n => by
-          simp only [Real.norm_eq_abs]; exact piE_term_norm_le (n + 6)
-        sorry -- 尾部级数估计，暂时跳过复杂证明
+  sorry -- 截断逼近定理，暂时跳过复杂证明
 
 #check @logic_chain
 #check @piE_series_summable
