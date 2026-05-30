@@ -312,7 +312,7 @@ theorem piE_series_summable : Summable piE_term :=
     证明: ‖‖piE_term n‖‖ = ‖piE_term n‖ (范数非负), 后者 ≤ (1/3)^n -/
 theorem piE_norm_summable : Summable (fun n => ‖piE_term n‖) :=
   (summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1 / 3) (by norm_num : (1 : ℝ) / 3 < 1)).of_norm_bounded
-    (fun n => by sorry -- 范数比较，暂时跳过)
+    (fun n => by sorry)
 
 /-- 部分和的实数版本 -/
 noncomputable def partialSum_piE_real (N : ℕ) : ℝ :=
@@ -320,15 +320,7 @@ noncomputable def partialSum_piE_real (N : ℕ) : ℝ :=
 
 /-- 部分和单调有界 (绝对值) -/
 theorem partialSum_bounded (N : ℕ) : |partialSum_piE_real N| ≤ 2 := by
-  unfold partialSum_piE_real
-  calc |∑ n ∈ Finset.range (N + 1), piE_term n|
-      ≤ ∑ n ∈ Finset.range (N + 1), ‖piE_term n‖ := norm_sum_le_of_le _ (fun n _ => le_refl _)
-    _ ≤ ∑ n ∈ Finset.range (N + 1), (1 / 3 : ℝ) ^ n :=
-        Finset.sum_le_sum (fun n _ => piE_term_norm_le n)
-    _ ≤ ∑' n, (1 / 3 : ℝ) ^ n := by
-        have h_nonneg : ∀ n, 0 ≤ (1 / 3 : ℝ) ^ n := fun n => pow_nonneg (by norm_num : (0 : ℝ) ≤ 1/3) n
-        have h_summable := summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/3) (by norm_num : (1 : ℝ) / 3 < 1)
-        sorry -- 部分和有界，暂时跳过复杂证明
+  sorry -- 部分和有界，暂时跳过复杂证明
 
 /-- 级数极限存在且为 √(π/(2e)) (声明; 精确值的证明需要高阶分析) -/
 noncomputable def piE_limit : ℝ := ∑' n, piE_term n
@@ -338,17 +330,7 @@ theorem piE_limit_eq_tsum : piE_limit = ∑' n, piE_term n := rfl
 
 /-- 极限的绝对值有界 -/
 theorem piE_limit_bounded : |piE_limit| ≤ 3 / 2 := by
-  unfold piE_limit
-  calc |∑' n, piE_term n|
-      ≤ ∑' n, ‖piE_term n‖ := norm_tsum_le_tsum_norm piE_norm_summable
-    _ ≤ ∑' n, (1 / 3 : ℝ) ^ n :=
-        have h_nonneg : ∀ n, 0 ≤ ‖piE_term n‖ := fun n => norm_nonneg (piE_term n)
-        have h_le : ∀ n, ‖piE_term n‖ ≤ (1 / 3 : ℝ) ^ n := fun n => by
-          simp only [Real.norm_eq_abs]; exact piE_term_norm_le n
-        sorry -- 级数比较，暂时跳过复杂证明
-    _ = 3 / 2 := by
-        rw [tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/3) (by norm_num : (1:ℝ)/3 < 1)]
-        ring
+  sorry -- 极限有界，暂时跳过复杂证明
 
 /-- 尾部级数可求和 -/
 theorem piE_tail_summable (k : ℕ) : Summable (fun n => piE_term (n + k)) := by
@@ -361,7 +343,7 @@ theorem geom_tail_summable (k : ℕ) : Summable (fun n => (1 / 3 : ℝ) ^ (n + k
 
 /-- 尾部范数可求和 (用于 tsum_le_tsum 的第二参数) -/
 theorem piE_tail_norm_summable (k : ℕ) : Summable (fun n => ‖piE_term (n + k)‖) :=
-  (geom_tail_summable k).of_norm_bounded (fun n => by sorry -- 尾部范数比较，暂时跳过)
+  (geom_tail_summable k).of_norm_bounded (fun n => by sorry)
 
 /-- 6项截断逼近定理: ‖S_5 - L‖ ≤ (1/3)^5 / 2
     对应论文定理4.3的收敛性根据
