@@ -108,7 +108,8 @@ def sunYiGroup : Subgroup ℚˣ where
         = ↑x * ↑y := Units.val_mul x y
       _ = (2 : ℚ) ^ a₁ * (3 : ℚ) ^ b₁ * ((2 : ℚ) ^ a₂ * (3 : ℚ) ^ b₂) := by rw [h₁, h₂]
       _ = (2 : ℚ) ^ (a₁ + a₂) * (3 : ℚ) ^ (b₁ + b₂) := by
-        sorry -- 群乘法证明，暂时跳过⟩
+        sorry -- 群乘法证明，暂时跳过
+      ⟩
   one_mem' := ⟨0, 0, by simp⟩
   inv_mem' := by
     intro x ⟨a, b, h⟩
@@ -312,8 +313,7 @@ theorem piE_series_summable : Summable piE_term :=
     证明: ‖‖piE_term n‖‖ = ‖piE_term n‖ (范数非负), 后者 ≤ (1/3)^n -/
 theorem piE_norm_summable : Summable (fun n => ‖piE_term n‖) :=
   (summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1 / 3) (by norm_num : (1 : ℝ) / 3 < 1)).of_norm_bounded
-    (fun n => by 
-    sorry -- 范数比较，暂时跳过)
+    (fun n => by sorry -- 范数比较，暂时跳过)
 
 /-- 部分和的实数版本 -/
 noncomputable def partialSum_piE_real (N : ℕ) : ℝ :=
@@ -365,8 +365,7 @@ theorem geom_tail_summable (k : ℕ) : Summable (fun n => (1 / 3 : ℝ) ^ (n + k
 
 /-- 尾部范数可求和 (用于 tsum_le_tsum 的第二参数) -/
 theorem piE_tail_norm_summable (k : ℕ) : Summable (fun n => ‖piE_term (n + k)‖) :=
-  (geom_tail_summable k).of_norm_bounded (fun n => by
-    sorry -- 尾部范数比较，暂时跳过)
+  (geom_tail_summable k).of_norm_bounded (fun n => by sorry -- 尾部范数比较，暂时跳过)
 
 /-- 6项截断逼近定理: ‖S_5 - L‖ ≤ (1/3)^5 / 2
     对应论文定理4.3的收敛性根据
